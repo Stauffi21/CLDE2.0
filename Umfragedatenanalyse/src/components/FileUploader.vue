@@ -1,34 +1,22 @@
 <template>
-  <div class="bg-white p-6 rounded-lg shadow-md max-w-xl mx-auto mt-10">
-    <h2 class="text-xl font-semibold text-gray-800 mb-4">CSV-Datei hochladen</h2>
+  <div class="max-w-2xl mx-auto text-center mt-10 bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-bold mb-4">Datei hochladen</h2>
 
     <form @submit.prevent="handleFileUpload" class="space-y-4">
-      <input
-        type="file"
-        accept=".csv"
-        @change="onFileChange"
-        class="block w-full text-sm text-gray-700 border rounded px-3 py-2"
-      />
-
+      <input type="file" accept=".csv" @change="onFileChange" />
       <button
         type="submit"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full disabled:opacity-50"
-        :disabled="!selectedFile || uploading"
+        class="bg-blue-600 text-white px-4 py-2 rounded"
+        :disabled="uploading || !selectedFile"
       >
-        {{ uploading ? 'Lade hoch...' : 'Datei hochladen' }}
+        {{ uploading ? 'Wird hochgeladen...' : 'Hochladen' }}
       </button>
     </form>
 
-    <div v-if="uploadSuccess" class="mt-4 text-green-700">
-      Upload erfolgreich!<br />
-      <strong>UUID:</strong> {{ result.uuid }}<br />
-      <strong>Ergebnis:</strong> <a :href="result.resultUrl" class="underline text-blue-600" target="_blank">result.json</a><br />
-      <strong>Diagramm:</strong> <a :href="result.visualUrl" class="underline text-blue-600" target="_blank">visual.png</a>
-    </div>
-
-    <div v-if="uploadError" class="mt-4 text-red-600">
-      Fehler beim Upload. Bitte erneut versuchen.
-    </div>
+    <div v-if="uploading" class="text-gray-500 mt-4">⏳ Upload läuft...</div>
+    <div v-if="polling" class="text-gray-500 mt-2">⌛ Warte auf Analyse...</div>
+    <div v-if="uploadError" class="text-red-600 mt-4">❌ Fehler beim Upload</div>
+    <div v-if="uploadTimeout" class="text-yellow-600 mt-4">⚠️ Analyse hat zu lange gedauert.</div>
   </div>
 </template>
 
@@ -36,26 +24,25 @@
 import { ref } from 'vue'
 import axios from 'axios'
 
-// Datei & Uploadstatus
+const emit = defineEmits(['upload-complete'])
+
 const selectedFile = ref(null)
 const uploading = ref(false)
-const uploadSuccess = ref(false)
+const polling = ref(false)
 const uploadError = ref(false)
-const result = ref({})
+const uploadTimeout = ref(false)
 
-// Datei auswählen
-function onFileChange(event) {
-  selectedFile.value = event.target.files[0]
+function onFileChange(e) {
+  selectedFile.value = e.target.files[0]
 }
 
-// Datei an API senden
 async function handleFileUpload() {
   if (!selectedFile.value) return
 
   uploading.value = true
-  uploadSuccess.value = false
+  polling.value = false
   uploadError.value = false
-  result.value = {}
+  uploadTimeout.value = false
 
   const formData = new FormData()
   formData.append('file', selectedFile.value)
@@ -71,13 +58,43 @@ async function handleFileUpload() {
       }
     )
 
-    result.value = response.data
-    uploadSuccess.value = true
-  } catch (error) {
-    console.error('Fehler beim Hochladen:', error)
-    uploadError.value = true
-  } finally {
+    const { resultUrl, visualUrls } = response.data
+
+    console.log("📥 Upload abgeschlossen:", response.data)
+
+    if (!resultUrl || !visualUrls || Object.keys(visualUrls).length === 0) {
+      throw new Error("Backend-Antwort unvollständig")
+    }
+
     uploading.value = false
+    polling.value = true
+
+    // Warten bis Analyse-Datei vorhanden ist
+    let ready = false
+    for (let i = 0; i < 15; i++) {
+      try {
+        await axios.get(resultUrl)
+        ready = true
+        break
+      } catch {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+
+    polling.value = false
+
+    if (!ready) {
+      uploadTimeout.value = true
+      return
+    }
+
+    emit('upload-complete', { resultUrl, visualUrls })
+
+  } catch (err) {
+    console.error('❌ Upload-Fehler:', err)
+    uploadError.value = true
+    uploading.value = false
+    polling.value = false
   }
 }
 </script>
