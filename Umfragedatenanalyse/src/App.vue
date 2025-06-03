@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import FileUploader from './components/FileUploader.vue'
 import ResultViewer from './components/ResultViewer.vue'
 
@@ -8,8 +8,11 @@ const componentKey = ref(0)
 
 function handleResult(uploadResult) {
   console.log("📥 Upload abgeschlossen:", uploadResult)
-  result.value = uploadResult
-  componentKey.value++
+  result.value = {}
+  nextTick(() => {
+    result.value = uploadResult
+    componentKey.value++
+  })
 }
 
 function getUuidFromUrl(url) {

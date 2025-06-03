@@ -71,7 +71,7 @@ async function handleFileUpload() {
 
     // Warten bis Analyse-Datei vorhanden ist
     let ready = false
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 30; i++) {
       try {
         await axios.get(resultUrl)
         ready = true
