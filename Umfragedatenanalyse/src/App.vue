@@ -23,17 +23,11 @@ function getUuidFromUrl(url) {
 <template>
   <div class="min-h-screen flex flex-col bg-gray-50">
 
-    <!-- HEADER -->
-    <header class="bg-blue-600 text-white p-4 shadow-md">
-      <div class="max-w-6xl mx-auto text-lg font-semibold">
-        📊 Umfrage Analyzer – Analyse leicht gemacht
-      </div>
-    </header>
-
     <!-- MAIN -->
     <main class="flex-grow flex items-center justify-center p-6">
       <div class="w-full max-w-3xl bg-white rounded-xl shadow-md p-8 text-center">
-        <h1 class="text-2xl font-bold mb-6">Umfragedaten analysieren</h1>
+        <h1 class="text-3xl font-extrabold text-gray-800 tracking-tight mb-2">📊 Umfragedaten analysieren</h1>
+        <p class="text-base text-gray-600 max-w-xl mx-auto">Lade deine <span class="font-medium">CSV-Datei</span> hoch. Achte darauf, dass das Trennzeichen ein <code class="bg-gray-100 px-1 py-0.5 rounded text-sm text-gray-800">;</code> ist.</p>
 
         <FileUploader @upload-complete="handleResult" />
 
@@ -55,10 +49,5 @@ function getUuidFromUrl(url) {
         </div>
       </div>
     </main>
-
-    <!-- FOOTER -->
-    <footer class="bg-gray-100 text-center text-sm text-gray-600 py-4 border-t">
-      © {{ new Date().getFullYear() }} Umfrage Analyzer - Erstellt im Modul CLDE mit der AWS Cloud und Vue.js
-    </footer>
   </div>
 </template>
