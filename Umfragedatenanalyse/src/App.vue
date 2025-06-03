@@ -4,10 +4,12 @@ import FileUploader from './components/FileUploader.vue'
 import ResultViewer from './components/ResultViewer.vue'
 
 const result = ref({})
+const componentKey = ref(0)
 
 function handleResult(uploadResult) {
   console.log("📥 Upload abgeschlossen:", uploadResult)
   result.value = uploadResult
+  componentKey.value++
 }
 
 function getUuidFromUrl(url) {
@@ -25,6 +27,7 @@ function getUuidFromUrl(url) {
       <div v-if="result.resultUrl" class="mt-8 space-y-4">
         <ResultViewer
           v-if="result.resultUrl"
+          :key="componentKey"
           :url="result.resultUrl"
           :visualUrls="result.visualUrls"
         />
