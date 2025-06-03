@@ -7,7 +7,7 @@ const result = ref({})
 const componentKey = ref(0)
 
 function handleResult(uploadResult) {
-  console.log("📥 Upload abgeschlossen:", uploadResult)
+  //console.log("📥 Upload abgeschlossen:", uploadResult)
   result.value = {}
   nextTick(() => {
     result.value = uploadResult
@@ -58,7 +58,7 @@ function getUuidFromUrl(url) {
 
     <!-- FOOTER -->
     <footer class="bg-gray-100 text-center text-sm text-gray-600 py-4 border-t">
-      © {{ new Date().getFullYear() }} Umfrage Analyzer · Erstellt mit Vue & AWS
+      © {{ new Date().getFullYear() }} Umfrage Analyzer - Erstellt im Modul CLDE mit der AWS Cloud und Vue.js
     </footer>
   </div>
 </template>

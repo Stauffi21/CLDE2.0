@@ -36,6 +36,26 @@ function onFileChange(e) {
   selectedFile.value = e.target.files[0]
 }
 
+async function postWithRetry(url, formData, retries = 1) {
+  try {
+    //console.log("⬆️ Sende Datei an:", url)
+    return await axios.post(url, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  } catch (err) {
+    const status = err.response?.status || 'unbekannt'
+    console.warn(`⚠️ Upload-Fehler (Status ${status}):`, err.message)
+
+    if (retries > 0 && (status === 502 || !err.response)) {
+      //console.log('🔁 Wiederhole Upload in 1.5s ...')
+      await new Promise(r => setTimeout(r, 1500))
+      return await postWithRetry(url, formData, retries - 1)
+    }
+
+    throw err
+  }
+}
+
 async function handleFileUpload() {
   if (!selectedFile.value) return
 
@@ -48,28 +68,24 @@ async function handleFileUpload() {
   formData.append('file', selectedFile.value)
 
   try {
-    const response = await axios.post(
+    const response = await postWithRetry(
       'https://8n7fzhi5r2.execute-api.us-east-1.amazonaws.com/dev/upload',
       formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      }
+      1 // Retry 1x bei Fehler
     )
 
     const { resultUrl, visualUrls } = response.data
 
-    console.log("📥 Upload abgeschlossen:", response.data)
-
     if (!resultUrl || !visualUrls || Object.keys(visualUrls).length === 0) {
-      throw new Error("Backend-Antwort unvollständig")
+      throw new Error("Backend-Antwort unvollständig oder fehlerhaft.")
     }
+
+    //console.log("📥 Upload abgeschlossen:", response.data)
 
     uploading.value = false
     polling.value = true
 
-    // Warten bis Analyse-Datei vorhanden ist
+    // Warten bis Analyse-Datei bereit
     let ready = false
     for (let i = 0; i < 30; i++) {
       try {
@@ -91,8 +107,8 @@ async function handleFileUpload() {
     emit('upload-complete', { resultUrl, visualUrls })
 
   } catch (err) {
-    console.error('❌ Upload-Fehler:', err)
-    uploadError.value = true
+    //console.error('❌ Upload-Fehler endgültig:', err.message)
+    uploadError.value = err.message || true
     uploading.value = false
     polling.value = false
   }
