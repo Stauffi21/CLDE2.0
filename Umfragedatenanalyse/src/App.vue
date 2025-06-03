@@ -21,29 +21,44 @@ function getUuidFromUrl(url) {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-    <div class="w-full max-w-3xl bg-white rounded-xl shadow-md p-8 text-center">
-      <h1 class="text-2xl font-bold mb-6">Umfragedaten analysieren</h1>
+  <div class="min-h-screen flex flex-col bg-gray-50">
 
-      <FileUploader @upload-complete="handleResult" />
+    <!-- HEADER -->
+    <header class="bg-blue-600 text-white p-4 shadow-md">
+      <div class="max-w-6xl mx-auto text-lg font-semibold">
+        📊 Umfrage Analyzer – Analyse leicht gemacht
+      </div>
+    </header>
 
-      <div v-if="result.resultUrl" class="mt-8 space-y-4">
-        <ResultViewer
-          v-if="result.resultUrl"
-          :key="componentKey"
-          :url="result.resultUrl"
-          :visualUrls="result.visualUrls"
-        />
-        <div class="text-center">
-          <a
-            :href="result.resultUrl"
-            download="analyse.json"
-            class="text-blue-600 hover:underline text-sm"
-          >
-            Analyse als JSON herunterladen
-          </a>
+    <!-- MAIN -->
+    <main class="flex-grow flex items-center justify-center p-6">
+      <div class="w-full max-w-3xl bg-white rounded-xl shadow-md p-8 text-center">
+        <h1 class="text-2xl font-bold mb-6">Umfragedaten analysieren</h1>
+
+        <FileUploader @upload-complete="handleResult" />
+
+        <div v-if="result.resultUrl" class="mt-8 space-y-4">
+          <ResultViewer
+            :key="componentKey"
+            :url="result.resultUrl"
+            :visualUrls="result.visualUrls"
+          />
+          <div class="text-center">
+            <a
+              :href="result.resultUrl"
+              download="analyse.json"
+              class="text-blue-600 hover:underline text-sm"
+            >
+              Analyse als JSON herunterladen
+            </a>
+          </div>
         </div>
       </div>
-    </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-gray-100 text-center text-sm text-gray-600 py-4 border-t">
+      © {{ new Date().getFullYear() }} Umfrage Analyzer · Erstellt mit Vue & AWS
+    </footer>
   </div>
 </template>
