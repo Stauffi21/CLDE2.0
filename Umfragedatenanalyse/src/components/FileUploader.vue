@@ -32,24 +32,31 @@ const polling = ref(false)
 const uploadError = ref(false)
 const uploadTimeout = ref(false)
 
+const API_KEY = import.meta.env.VITE_API_KEY
+
 function onFileChange(e) {
   selectedFile.value = e.target.files[0]
 }
 
-async function postWithRetry(url, formData, retries = 1) {
+async function postWithRetry(url, formData, retries = 1, apiKey = null) {
   try {
-    //console.log("⬆️ Sende Datei an:", url)
-    return await axios.post(url, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
+    const headers = {
+      'Content-Type': 'multipart/form-data'
+    }
+
+    if (apiKey) {
+      headers['x-api-key'] = apiKey
+    }
+
+    return await axios.post(url, formData, { headers })
+
   } catch (err) {
     const status = err.response?.status || 'unbekannt'
     console.warn(`⚠️ Upload-Fehler (Status ${status}):`, err.message)
 
     if (retries > 0 && (status === 502 || !err.response)) {
-      //console.log('🔁 Wiederhole Upload in 1.5s ...')
       await new Promise(r => setTimeout(r, 1500))
-      return await postWithRetry(url, formData, retries - 1)
+      return await postWithRetry(url, formData, retries - 1, apiKey)
     }
 
     throw err
@@ -71,7 +78,8 @@ async function handleFileUpload() {
     const response = await postWithRetry(
       'https://8n7fzhi5r2.execute-api.us-east-1.amazonaws.com/dev/upload',
       formData,
-      1 // Retry 1x bei Fehler
+      1,
+      API_KEY
     )
 
     const { resultUrl, visualUrls } = response.data
@@ -80,12 +88,9 @@ async function handleFileUpload() {
       throw new Error("Backend-Antwort unvollständig oder fehlerhaft.")
     }
 
-    //console.log("📥 Upload abgeschlossen:", response.data)
-
     uploading.value = false
     polling.value = true
 
-    // Warten bis Analyse-Datei bereit
     let ready = false
     for (let i = 0; i < 30; i++) {
       try {
@@ -107,7 +112,6 @@ async function handleFileUpload() {
     emit('upload-complete', { resultUrl, visualUrls })
 
   } catch (err) {
-    //console.error('❌ Upload-Fehler endgültig:', err.message)
     uploadError.value = err.message || true
     uploading.value = false
     polling.value = false
